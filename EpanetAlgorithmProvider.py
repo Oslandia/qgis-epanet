@@ -63,6 +63,7 @@ class EpanetAlgorithmProvider(AlgorithmProvider):
         try:
             self.algs.append(EpanetAlgorithm())
         except Exception, e:
+            print "error"
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, 
                 'Could not create Epanet algorithm')
 

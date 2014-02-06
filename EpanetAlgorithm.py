@@ -93,6 +93,14 @@ class EpanetAlgorithm(GeoAlgorithm):
     CONTROLS    = 'CONTROLS'
     QUALITY     = 'QUALITY'
     MIXING      = 'MIXING'
+    RULES       = 'RULES'
+
+    # key values
+    ENERGY      = 'ENERGY'
+    REACTIONS   = 'REACTIONS'
+    TIMES       = 'TIMES'
+    REPORT      = 'REPORT'
+    OPTIONS     = 'OPTIONS'
 
     NODE_OUTPUT = 'NODE_OUTPUT'
     LINK_OUTPUT = 'LINK_OUTPUT'
@@ -139,7 +147,13 @@ class EpanetAlgorithm(GeoAlgorithm):
         self.addParameter(ParameterTable(self.QUALITY  , 'Quality   table', True))
         self.addParameter(ParameterTable(self.MIXING   , 'Mixing    table', True))
 
-        self.addParameter(ParameterFile(self.ADDITIONAL_FILE, 'Epanet config file'))
+        #self.addParameter(ParameterFile(self.ADDITIONAL_FILE, 'Epanet config file'))
+        self.addParameter(ParameterTable(self.TIMES, 'Simulation Time'))
+        self.addParameter(ParameterTable(self.RULES, 'Control rules', True))
+        self.addParameter(ParameterTable(self.ENERGY, 'Energy ', True))
+        self.addParameter(ParameterTable(self.REACTIONS, 'Reaction', True))
+        self.addParameter(ParameterTable(self.REPORT, 'Report options', True))
+        self.addParameter(ParameterTable(self.OPTIONS, 'Options', True))
 
         self.addOutput(OutputVector(self.NODE_OUTPUT, 'Node output layer'))
         self.addOutput(OutputVector(self.LINK_OUTPUT, 'Link output layer'))
@@ -150,35 +164,10 @@ class EpanetAlgorithm(GeoAlgorithm):
             return 'Epanet command line tool is not configured.\n\
                 Please configure it before running Epanet algorithms.'
         layers = dataobjects.getVectorLayers()
-        for layer in layers:
-            if layer.name() == 'JUNCTIONS' :
-                self.setParameterValue(self.JUNCTIONS, layer )
-            if layer.name() == 'PIPES' :
-                self.setParameterValue(self.PIPES, layer )
-            if layer.name() == 'RESERVOIRS' :
-                self.setParameterValue(self.RESERVOIRS, layer )
-            if layer.name() == 'TANKS' :
-                self.setParameterValue(self.TANKS, layer )
-            if layer.name() == 'PUMPS' :
-                self.setParameterValue(self.PUMPS, layer )
-            if layer.name() == 'VALVES' :
-                self.setParameterValue(self.VALVES, layer )
-            if layer.name() == 'EMITTERS' :
-                self.setParameterValue(self.EMITTERS, layer )
-            if layer.name() == 'DEMANDS' :
-                self.setParameterValue(self.DEMANDS, layer )
-            if layer.name() == 'STATUS' :
-                self.setParameterValue(self.STATUS, layer )
-            if layer.name() == 'PATTERNS' :
-                self.setParameterValue(self.PATTERNS, layer )
-            if layer.name() == 'CURVES' :
-                self.setParameterValue(self.CURVES, layer )
-            if layer.name() == 'CONTROLS' :
-                self.setParameterValue(self.CONTROLS, layer )
-            if layer.name() == 'QUALITY' :
-                self.setParameterValue(self.QUALITY, layer )
-            if layer.name() == 'MIXING' :
-                self.setParameterValue(self.MIXING, layer )
+        for p in self.parameters:
+            for layer in layers:
+                if layer.name().lower() == p.name.lower() :
+                    self.setParameterValue(p.name, layer )
 
 
         return None
@@ -201,6 +190,29 @@ class EpanetAlgorithm(GeoAlgorithm):
                     else: tbl += '\t'
             tbl += '\n'
         tbl += '\n'
+        return tbl;
+
+    def epanetKeyVal(self, table_name, simul_title):
+        uri = self.getParameterValue(table_name)
+        if not uri: return u''
+        layer = dataobjects.getObjectFromUri(uri)
+        fields = []
+        for i,field in enumerate(layer.dataProvider().fields()): 
+            fields.append(field.name())
+
+        tbl =u'['+table_name+']\n'
+        found = False
+        for feature in layer.getFeatures():
+            if str(feature[0]) == simul_title:
+                for i,v in enumerate(feature):
+                    if i and str(v) != 'NULL': tbl += fields[i].upper()+'\t'+str(v)+'\n'
+                    elif i : tbl += '\t'
+                found = True
+                tbl += '\n'
+        tbl += '\n'
+        if not found:
+            raise GeoAlgorithmExecutionException(
+                    "No simulation named '"+simul_title+"' in "+table_name)
         return tbl;
 
     def processAlgorithm(self, progress):
@@ -230,10 +242,17 @@ class EpanetAlgorithm(GeoAlgorithm):
         f.write(self.epanetTable(self.CONTROLS   ))
         f.write(self.epanetTable(self.QUALITY    ))
         f.write(self.epanetTable(self.MIXING     ))
+        f.write(self.epanetTable(self.RULES      ))
 
-        a = codecs.open(self.getParameterValue(self.ADDITIONAL_FILE),'r',encoding='utf-8')
-        f.write( a.read() )
-        a.close()
+        f.write(self.epanetKeyVal(self.TIMES, self.getParameterValue(self.TITLE) ))
+        f.write(self.epanetKeyVal(self.OPTIONS, self.getParameterValue(self.TITLE) ))
+        f.write(self.epanetKeyVal(self.REPORT, self.getParameterValue(self.TITLE) ))
+        f.write(self.epanetKeyVal(self.REACTIONS, self.getParameterValue(self.TITLE) ))
+        f.write(self.epanetKeyVal(self.ENERGY, self.getParameterValue(self.TITLE) ))
+
+        #a = codecs.open(self.getParameterValue(self.ADDITIONAL_FILE),'r',encoding='utf-8')
+        #f.write( a.read() )
+        #a.close()
 
         f.write('\n[END]\n')
 

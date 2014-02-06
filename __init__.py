@@ -6,10 +6,13 @@ from processing.core.Processing import Processing
 class Dummy:
 
     def __init__(self):
-        self.provider = EpanetAlgorithmProvider()
+        pass
     
     def initGui(self):
-        Processing.addProvider(self.provider)
+        print "here"
+        self.provider = EpanetAlgorithmProvider()
+        print self.provider 
+        Processing.addProvider(self.provider, True)
     
     def unload(self):
         Processing.removeProvider(self.provider)
