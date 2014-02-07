@@ -45,6 +45,7 @@ from processing.parameters.ParameterNumber import ParameterNumber
 from processing.parameters.ParameterFile import ParameterFile
 from processing.parameters.Parameter import Parameter
 from processing.outputs.OutputVector import OutputVector
+from EpanetOutputTable import EpanetOutputTable
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.tools import dataobjects
 
@@ -102,8 +103,10 @@ class EpanetAlgorithm(GeoAlgorithm):
     REPORT      = 'REPORT'
     OPTIONS     = 'OPTIONS'
 
-    NODE_OUTPUT = 'NODE_OUTPUT'
-    LINK_OUTPUT = 'LINK_OUTPUT'
+    #NODE_OUTPUT = 'NODE_OUTPUT'
+    #LINK_OUTPUT = 'LINK_OUTPUT'
+    NODE_TABLE_OUTPUT = 'NODE_TABLE_OUTPUT'
+    LINK_TABLE_OUTPUT = 'LINK_TABLE_OUTPUT'
     
     # everything else
     ADDITIONAL_FILE = 'ADDITIONAL_FILE'
@@ -155,8 +158,10 @@ class EpanetAlgorithm(GeoAlgorithm):
         self.addParameter(ParameterTable(self.REPORT, 'Report options', True))
         self.addParameter(ParameterTable(self.OPTIONS, 'Options', True))
 
-        self.addOutput(OutputVector(self.NODE_OUTPUT, 'Node output layer'))
-        self.addOutput(OutputVector(self.LINK_OUTPUT, 'Link output layer'))
+        #self.addOutput(OutputVector(self.NODE_OUTPUT, 'Node output layer'))
+        #self.addOutput(OutputVector(self.LINK_OUTPUT, 'Link output layer'))
+        self.addOutput(EpanetOutputTable(self.NODE_TABLE_OUTPUT, 'Node output table'))
+        self.addOutput(EpanetOutputTable(self.LINK_TABLE_OUTPUT, 'Link output table'))
         pass
 
     def checkBeforeOpeningParametersDialog(self):
@@ -277,38 +282,6 @@ class EpanetAlgorithm(GeoAlgorithm):
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, log)
         progress.setText('postprocessing output')
 
-        # put features in a map indexed by the identifier (first column)
-        layer = dataobjects.getObjectFromUri(self.getParameterValue(self.JUNCTIONS))
-        node_fields = QgsFields()
-        node_fields.append(QgsField('Node', QVariant.String))
-        node_fields.append(QgsField('Demand', QVariant.Double))
-        node_fields.append(QgsField('Head', QVariant.Double))
-        node_fields.append(QgsField('Pressure', QVariant.Double))
-        node_fields.append(QgsField('Time', QVariant.String))
-        node_writer = self.getOutputFromName(
-                self.NODE_OUTPUT).getVectorWriter(node_fields.toList(),
-                                                   QGis.WKBPoint,
-                                                   layer.crs())
-        node_feat = {}
-        for feat in layer.getFeatures(): 
-            node_feat[feat.attributes()[0]] = feat
-
-        layer = dataobjects.getObjectFromUri(self.getParameterValue(self.PIPES))
-        link_fields = QgsFields()
-        link_fields.append(QgsField('Link', QVariant.String))
-        link_fields.append(QgsField('Flow', QVariant.Double))
-        link_fields.append(QgsField('Velocity', QVariant.Double))
-        link_fields.append(QgsField('Headloss', QVariant.Double))
-        link_fields.append(QgsField('Time', QVariant.String))
-        link_writer = self.getOutputFromName(
-                self.LINK_OUTPUT).getVectorWriter(link_fields.toList(),
-                                                   QGis.WKBLineString,
-                                                   layer.crs())
-        link_feat = {}
-        for feat in layer.getFeatures():
-            if feat.geometry() and feat.geometry().exportToWkt(): 
-                link_feat[feat.attributes()[0]] = feat
-
         # here we create output layers
         # it's a python implementation of a join
         # on the identifyer field between the results an the JUNCTIONS or PIPES
@@ -322,6 +295,8 @@ class EpanetAlgorithm(GeoAlgorithm):
         time = ''
         date = datetime.datetime.now().strftime("%Y-%m-%d")
         line = o.readline()
+        link_table = []
+        node_table = []
         while line:
             line = line.rstrip()
             if (in_node or in_link) and not line: 
@@ -338,33 +313,40 @@ class EpanetAlgorithm(GeoAlgorithm):
                 for i in range(5): line = o.readline()
                 line = line.rstrip()
             if in_node:
-                feature = QgsFeature(node_fields)
+                #feature = QgsFeature(node_fields)
                 tbl = re.findall(r"\S+(?:\s\S+)*", line)
                 if len(tbl) >= 4:
-                    feature['Node']     = tbl[0]
-                    feature['Demand']   = tbl[1]
-                    feature['Head']     = tbl[2]
-                    feature['Pressure'] = tbl[3]
-                    feature['Time']     = date+' '+time
-                    feat = node_feat.get(tbl[0], None)
-                    if feat : 
-                        feature.setGeometry(feat.geometry())
-                    node_writer.addFeature(feature)
+                    node_table.append(tbl+[date+' '+time])
             if in_link:
-                feature = QgsFeature(link_fields)
+                #feature = QgsFeature(link_fields)
                 tbl = re.findall(r"\S+(?:\s\S+)*", line)
                 if len(tbl) >= 4:
-                    feature['Link']     = tbl[0]
-                    feature['Flow']     = tbl[1]
-                    feature['Velocity'] = tbl[2]
-                    feature['Headloss'] = tbl[3]
-                    feature['Time']     = date+' '+time
-                    feat = link_feat.get(tbl[0], None)
-                    if feat :
-                        feature.setGeometry(feat.geometry())
-                    link_writer.addFeature(feature)
+                    link_table.append(tbl+[date+' '+time])
             line = o.readline()
             total_read += len(line)
             progress.setPercentage(int(100*total_read/total_size))
 
         o.close()
+
+        node_fields = [
+            QgsField('Node', QVariant.String, 'String'),
+            QgsField('Demand', QVariant.Double, 'Real'),
+            QgsField('Head', QVariant.Double, 'Real'),
+            QgsField('Pressure', QVariant.Double, 'Real'),
+            QgsField('Time', QVariant.String, 'String')]
+        node_table_writer = self.getOutputFromName(
+                self.NODE_TABLE_OUTPUT).getTableWriter( node_fields )
+        #        self.NODE_TABLE_OUTPUT).getTableWriter(['Node','Demand','Head','Pressure','Time'])
+        node_table_writer.addRecords( node_table )
+
+        link_fields = [
+            QgsField('Link', QVariant.String, 'String'),
+            QgsField('Flow', QVariant.Double, 'Real'),
+            QgsField('Velocity', QVariant.Double, 'Real'),
+            QgsField('Headloss', QVariant.Double, 'Real'),
+            QgsField('Time', QVariant.String, 'String')]
+        link_table_writer = self.getOutputFromName(
+                self.LINK_TABLE_OUTPUT).getTableWriter( link_fields )
+        #        self.LINK_TABLE_OUTPUT).getTableWriter(['Link','Flow','Velocity','Headloss','Time'])
+        link_table_writer.addRecords( link_table )
+
