@@ -316,17 +316,19 @@ class EpanetAlgorithm(GeoAlgorithm):
                 #feature = QgsFeature(node_fields)
                 tbl = re.findall(r"\S+(?:\s\S+)*", line)
                 if len(tbl) >= 4:
-                    node_table.append(tbl+[date+' '+time])
+                    node_table.append(tbl[0:4]+[date+' '+time])
             if in_link:
                 #feature = QgsFeature(link_fields)
                 tbl = re.findall(r"\S+(?:\s\S+)*", line)
                 if len(tbl) >= 4:
-                    link_table.append(tbl+[date+' '+time])
+                    link_table.append(tbl[0:4]+[date+' '+time])
             line = o.readline()
             total_read += len(line)
             progress.setPercentage(int(100*total_read/total_size))
 
         o.close()
+
+        progress.setText('writing output layers ')
 
         node_fields = [
             QgsField('Node', QVariant.String, 'String'),
