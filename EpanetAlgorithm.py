@@ -30,6 +30,9 @@ import re
 import datetime
 import codecs
 import subprocess
+from operator import itemgetter
+from numpy import mean
+
 from qgis.core import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -106,7 +109,9 @@ class EpanetAlgorithm(GeoAlgorithm):
     #NODE_OUTPUT = 'NODE_OUTPUT'
     #LINK_OUTPUT = 'LINK_OUTPUT'
     NODE_TABLE_OUTPUT = 'NODE_TABLE_OUTPUT'
+    TIME_AGREGATE_NODE_TABLE_OUTPUT = 'TIME_AGREGATE_NODE_TABLE_OUTPUT'
     LINK_TABLE_OUTPUT = 'LINK_TABLE_OUTPUT'
+    TIME_AGREGATE_LINK_TABLE_OUTPUT = 'TIME_AGREGATE_LINK_TABLE_OUTPUT'
     
     # everything else
     ADDITIONAL_FILE = 'ADDITIONAL_FILE'
@@ -162,6 +167,8 @@ class EpanetAlgorithm(GeoAlgorithm):
         #self.addOutput(OutputVector(self.LINK_OUTPUT, 'Link output layer'))
         self.addOutput(EpanetOutputTable(self.NODE_TABLE_OUTPUT, 'Node output table'))
         self.addOutput(EpanetOutputTable(self.LINK_TABLE_OUTPUT, 'Link output table'))
+        self.addOutput(EpanetOutputTable(self.TIME_AGREGATE_NODE_TABLE_OUTPUT, 'Node output table (time agregates)'))
+        self.addOutput(EpanetOutputTable(self.TIME_AGREGATE_LINK_TABLE_OUTPUT, 'Link output table (time agregates)'))
         pass
 
     def checkBeforeOpeningParametersDialog(self):
@@ -328,7 +335,7 @@ class EpanetAlgorithm(GeoAlgorithm):
 
         o.close()
 
-        progress.setText('writing output layers ')
+        progress.setText('writing output tables')
 
         node_fields = [
             QgsField('Node', QVariant.String, 'String'),
@@ -338,7 +345,6 @@ class EpanetAlgorithm(GeoAlgorithm):
             QgsField('Time', QVariant.String, 'String')]
         node_table_writer = self.getOutputFromName(
                 self.NODE_TABLE_OUTPUT).getTableWriter( node_fields )
-        #        self.NODE_TABLE_OUTPUT).getTableWriter(['Node','Demand','Head','Pressure','Time'])
         node_table_writer.addRecords( node_table )
 
         link_fields = [
@@ -351,4 +357,77 @@ class EpanetAlgorithm(GeoAlgorithm):
                 self.LINK_TABLE_OUTPUT).getTableWriter( link_fields )
         #        self.LINK_TABLE_OUTPUT).getTableWriter(['Link','Flow','Velocity','Headloss','Time'])
         link_table_writer.addRecords( link_table )
+
+        progress.setText('computing times agregates')
+        # low speed (stagnation)
+        # high and low pressure (risk of breakage, unhappy consumer)
+        # lack of level variation in reservoirs (stagnation)
+        # negative pressure (empty reservoir) highlighted in red in the software
+        # reservoir overflow highlighted in blue
+        # abnormal pressure (typical of error in the altitude of a node in the model)
+        # flow direction
+        # pressure variations
+
+
+        # computes time aggregates for nodes
+        agr_node_fields = [
+            QgsField('Node', QVariant.String, 'String'),
+            QgsField('MaxPressure', QVariant.Double, 'Real'),
+            QgsField('MinPressure', QVariant.Double, 'Real'),
+            QgsField('MaxHead', QVariant.Double, 'Real'),
+            QgsField('MinHead', QVariant.Double, 'Real')
+            ]
+        time_agr_node_table_writer = self.getOutputFromName(
+                self.TIME_AGREGATE_NODE_TABLE_OUTPUT).getTableWriter( agr_node_fields )
+        sorted_res = sorted(node_table,key=itemgetter(0))
+        key = ""
+        node_res = []
+        agr_node_table = []
+        progress.setText('computing time agregates for nodes')
+        total_size = len(sorted_res)
+        total_read = 0
+        for r in sorted_res:
+            if key != r[0] and node_res: # new stuff, we create and aggregate
+                agr_node_table.append( [key, 
+                    max([row[3] for row in node_res]),
+                    min([row[3] for row in node_res]),
+                    max([row[2] for row in node_res]),
+                    min([row[2] for row in node_res]),
+                    ] )
+                key = r[0]
+                node_res = []
+            else: 
+                node_res.append(r)
+            total_read += 1
+            progress.setPercentage(int(100*total_read/total_size))
+
+        time_agr_node_table_writer.addRecords( agr_node_table )
+
+        # computes time aggregates for links
+        agr_link_fields = [
+            QgsField('Link', QVariant.String, 'String'),
+            QgsField('AvgVelocity', QVariant.Double, 'Real')
+            ]
+        time_agr_link_table_writer = self.getOutputFromName(
+                self.TIME_AGREGATE_LINK_TABLE_OUTPUT).getTableWriter( agr_link_fields )
+        sorted_res = sorted(link_table,key=itemgetter(0))
+        key = ""
+        link_res = []
+        agr_link_table = []
+        progress.setText('computing time agregates for links')
+        total_size = len(sorted_res)
+        total_read = 0
+        for r in sorted_res:
+            if key != r[0] and link_res: # new stuff, we create and aggregate
+                agr_link_table.append( [key, 
+                    mean([float(row[3]) for row in link_res])
+                    ] )
+                key = r[0]
+                link_res = []
+            else: 
+                link_res.append(r)
+            total_read += 1
+            progress.setPercentage(int(100*total_read/total_size))
+
+        time_agr_link_table_writer.addRecords( agr_link_table )
 

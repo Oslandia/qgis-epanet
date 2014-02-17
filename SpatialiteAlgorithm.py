@@ -27,7 +27,6 @@ __revision__ = '$Format:%H$'
 
 import os
 import re
-import datetime
 import codecs
 import subprocess
 from qgis.core import *
@@ -80,6 +79,7 @@ class SpatialiteAlgorithm(GeoAlgorithm):
         return None
 
     def processAlgorithm(self, progress):
+        progress.setText('processing')
         folder = '/tmp' #ProcessingConfig.getSetting(ProcessingConfig.OUTPUT_FOLDER)
         query = self.getParameterValue(self.QUERY)
 
@@ -114,19 +114,18 @@ class SpatialiteAlgorithm(GeoAlgorithm):
 
             curr.execute("DROP TABLE IF EXISTS input")
             curr.execute("CREATE TABLE input ("+','.join(cols)+")")
-            i = 0
+            size = 0
             total_size = layer.featureCount()
             for f in layer.getFeatures():
-                i += 1
                 vals = [ "'"+str(a)+"'" if quote[i] else str(a) for i,a in enumerate(f.attributes())]
                 sql = "INSERT INTO input VALUES ("+','.join(vals)+")"
                 curr.execute(sql)
-                progress.setPercentage(int(100*i/total_size))
+                size += 1
+                progress.setPercentage(int(100*size/total_size))
                 
 
             progress.setText('executing query')
             curr.execute(query)
-            print  curr.description
             progress.setText('saving output')
             fields = [ QgsField( d[0],  QVariant.String) for d in  curr.description ]
             node_table_writer = self.getOutputFromName(
