@@ -70,7 +70,7 @@ class Gui:
             if res: 
                 assert(len(res) == 1)
                 nbfeat = len(layer.selectedFeatures())
-                fig,p = subplots(1,nbfeat)
+                fig, p = subplots(1,nbfeat)
                 if nbfeat == 1 : p = [p]
                 for i,s in enumerate(layer.selectedFeatures()):
                     x,y = [],[]
@@ -83,6 +83,26 @@ class Gui:
                     p[i].set_title(layer.name()+' '+s['ID Arc'])
                     p[i].set_xlabel('Time [min]')
                     p[i].set_ylabel('Flow [m3/h]')
+                show()
+
+        if layer.name().lower() == 'junctions':
+            res = QgsMapLayerRegistry.instance().mapLayersByName('Node output table')
+            if res: 
+                assert(len(res) == 1)
+                nbfeat = len(layer.selectedFeatures())
+                fig, p = subplots(1,nbfeat)
+                if nbfeat == 1 : p = [p]
+                for i,s in enumerate(layer.selectedFeatures()):
+                    x,y = [],[]
+                    for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Node = '"+s['ID Noeud']+"'"))):
+                        #print s['ID Noeud'],' ',f['Time'],' ',f['Head']
+                        t = f['Time'].split(' ')[1].split(':')
+                        x.append(int(t[0])*60+int(t[1]))
+                        y.append(f['Pressure'])
+                    p[i].plot(x,y)
+                    p[i].set_title(layer.name()+' '+s['ID Noeud'])
+                    p[i].set_xlabel('Time [min]')
+                    p[i].set_ylabel('Pressure [m]')
                 show()
 
 

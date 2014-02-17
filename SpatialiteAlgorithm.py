@@ -101,7 +101,7 @@ class SpatialiteAlgorithm(GeoAlgorithm):
         # insert data
         # execute query
         # create table from query results
-        with dbapi2.connect(':memory') as conn:
+        with dbapi2.connect(':memory:') as conn:
             progress.setText('converting to spatialite')
             curr = conn.cursor()
             cols = []
