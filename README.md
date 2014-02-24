@@ -16,7 +16,52 @@ You need :
 Installation
 ============
 
-TODO
+You need to have epanet as a command line tool for the plugin to work.
+
+Compile Epanet for linux
+------------------------
+
+Download Epanet sources from http://www.epa.gov/nrmrl/wswrd/dw/epanet/EN2source.zip
+
+For linux:
+
+ mkdir epanet
+ cd epanet
+ wget http://www.epa.gov/nrmrl/wswrd/dw/epanet/EN2source.zip
+ unzip EN2source.zip
+ unzip -n epanet2.zip 
+ unzip -n makefiles.ZIP
+ unzip -n GNU_EXE.ZIP
+
+Open the file epanet.c, comment out the line
+
+ #define DLL
+
+and uncomment the line
+
+ #define CLE
+
+Open the file Makefile and replace the line
+
+ cc -o epanet2 -lm $(objs)
+
+by
+
+ cc -o epanet2 $(objs) -lm 
+
+Then run: 
+ 
+ make
+
+Install the plugin
+------------------
+ 
+Simply put this directory in the plugin directory. On linux:
+
+ cd ~/.qgis2/python/plugin
+ git clone git@github.com:Oslandia/qgis-epanet.git 
+
+
 
 Notes
 =====
