@@ -61,6 +61,7 @@ Simply put this directory in the plugin directory. On linux:
     cd ~/.qgis2/python/plugin
     git clone git@github.com:Oslandia/qgis-epanet.git 
 
+You then need to run QGIS, install the processing plugin and configure the path to the epanet executable in QGIS menu Processsing->Options and configuration. 
 
 
 Notes
