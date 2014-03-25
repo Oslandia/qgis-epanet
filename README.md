@@ -5,6 +5,10 @@ Extends processing framework to models the hydraulic and water quality behavior 
 
 This plugin lets you model hydraulic network for water and run simulations to get water pressure informations and more.
 
+See a demo screencast here :
+
+https://vimeo.com/87754967
+
 Requirements
 ============
 
@@ -75,5 +79,8 @@ Credits
 =======
 
 This plugin has been developed by Oslandia ( http://www.oslandia.com ).
+
 Oslandia provides support and assistance for QGIS and associated tools, including this plugin.
+
 This work has been funded by European funds.
+Thanks to GIS Apavil from Valcea (Romania)
