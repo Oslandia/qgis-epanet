@@ -24,11 +24,11 @@ email=infos@oslandia.com
 # changelog=
 
 # tags are comma separated with spaces allowed
-tags=
+# tags=
 
-homepage=
-tracker=
-repository=
+homepage=https://github.com/Oslandia/qgis-epanet
+# tracker=
+repository=https://github.com/Oslandia/qgis-epanet
 icon=epanet.png
 # experimental flag
 experimental=True
