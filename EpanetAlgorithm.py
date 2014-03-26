@@ -228,13 +228,13 @@ class EpanetAlgorithm(GeoAlgorithm):
         return tbl;
 
     def processAlgorithm(self, progress):
-        epanet_cli = ProcessingConfig.getSetting('Epanet_CLI')
+        epanet_cli = os.path.abspath(ProcessingConfig.getSetting('Epanet_CLI'))
         if not epanet_cli:
             raise GeoAlgorithmExecutionException(
                     'Epanet command line toom is not configured.\n\
                      Please configure it before running Epanet algorithms.')
-        folder = '/tmp' #ProcessingConfig.getSetting(ProcessingConfig.OUTPUT_FOLDER)
-        filename = folder+'/epanet.inp'
+        folder = ProcessingConfig.getSetting(ProcessingConfig.OUTPUT_FOLDER)
+        filename = os.path.join(folder, 'epanet.inp')
         f = codecs.open(filename,'w',encoding='utf-8')
         f.write('[TITLE]\n')
         f.write(self.getParameterValue(self.TITLE)+'\n\n')
@@ -262,19 +262,15 @@ class EpanetAlgorithm(GeoAlgorithm):
         f.write(self.epanetKeyVal(self.REACTIONS, self.getParameterValue(self.TITLE) ))
         f.write(self.epanetKeyVal(self.ENERGY, self.getParameterValue(self.TITLE) ))
 
-        #a = codecs.open(self.getParameterValue(self.ADDITIONAL_FILE),'r',encoding='utf-8')
-        #f.write( a.read() )
-        #a.close()
-
         f.write('\n[END]\n')
 
         f.close()
 
-        outfilename = folder+'/epanet.out'
+        outfilename = os.path.join(folder,'epanet.out')
         progress.setText('running simulation')
         log=""
         proc = subprocess.Popen(
-            epanet_cli+" "+filename+" "+outfilename,
+            [epanet_cli, filename, outfilename],
             shell=True,
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE,
