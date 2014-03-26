@@ -84,3 +84,10 @@ Oslandia provides support and assistance for QGIS and associated tools, includin
 
 This work has been funded by European funds.
 Thanks to GIS Apavil from Valcea (Romania)
+
+Licence
+=======
+
+This work is free software and licenced under the GNU GPL version 2 or any later version.
+See LICENCE file.
+
