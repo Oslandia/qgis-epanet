@@ -83,7 +83,7 @@ This plugin has been developed by Oslandia ( http://www.oslandia.com ).
 Oslandia provides support and assistance for QGIS and associated tools, including this plugin.
 
 This work has been funded by European funds.
-Thanks to GIS Apavil from Valcea (Romania)
+Thanks to the GIS Office of Apavil, Valcea County (Romania)
 
 Licence
 =======
