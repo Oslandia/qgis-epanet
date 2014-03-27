@@ -22,6 +22,12 @@ Installation
 
 You need to have epanet as a command line tool for the plugin to work.
 
+Install Epanet for Windows
+--------------------------
+
+Download and run http://www.epa.gov/nrmrl/wswrd/dw/epanet/EN2setup.exe
+
+
 Compile Epanet for linux
 ------------------------
 
@@ -63,9 +69,12 @@ Install the plugin
 Simply put this directory in the plugin directory. On linux:
 
     cd ~/.qgis2/python/plugin
-    git clone git@github.com:Oslandia/qgis-epanet.git 
+    git clone https://github.com/Oslandia/qgis-epanet.git
 
-You then need to run QGIS, install the processing plugin and configure the path to the epanet executable in QGIS menu Processsing->Options and configuration. 
+You then need to run QGIS, install the processing plugin and configure the path to the epanet executable in QGIS menu Processsing->Options and configuration.
+
+Note:
+    On Windows, choose epanet2d.exe.
 
 
 Notes
