@@ -61,17 +61,17 @@ class Gui:
                 print nbfeat, p
                 for i,s in enumerate(layer.selectedFeatures()):
                     x,y = [],[]
-                    for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Node = '"+s['ID Noeud']+"'"))):
+                    for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Node = '"+s[0]+"'"))):
                         #print s['ID Noeud'],' ',f['Time'],' ',f['Head']
                         t = f['Time'].split(' ')[1].split(':')
                         x.append(int(t[0])*60+int(t[1]))
                         y.append(f['Pressure'])
-                    p[i].axhspan(float(s['Niv Min']), float(s['Niv Max']), color='lightgreen')
-                    p[i].text(0, float(s['Niv Max']), ' overflow')
-                    p[i].text(0, float(s['Niv Min']), ' empty')
+                    p[i].axhspan(float(s[3]), float(s[4]), color='lightgreen')
+                    p[i].text(0, float(s[4]), ' overflow')
+                    p[i].text(0, float(s[3]), ' empty')
                     p[i].set_axis_bgcolor('r')
                     p[i].plot(x,y)
-                    p[i].set_title(layer.name()+' '+s['ID Noeud'])
+                    p[i].set_title(layer.name()+' '+s[0])
                     p[i].set_xlabel('Time [min]')
                     p[i].set_ylabel('Level [m]')
                 if fig : show()
@@ -86,13 +86,13 @@ class Gui:
                 if nbfeat == 1 : p = [p]
                 for i,s in enumerate(layer.selectedFeatures()):
                     x,y = [],[]
-                    for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Link = '"+s['ID Arc']+"'"))):
+                    for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Link = '"+s[0]+"'"))):
                         #print s['ID Noeud'],' ',f['Time'],' ',f['Head']
                         t = f['Time'].split(' ')[1].split(':')
                         x.append(int(t[0])*60+int(t[1]))
                         y.append(f['Flow'])
                     p[i].plot(x,y)
-                    p[i].set_title(layer.name()+' '+s['ID Arc'])
+                    p[i].set_title(layer.name()+' '+s[0])
                     p[i].set_xlabel('Time [min]')
                     p[i].set_ylabel('Flow [m3/h]')
                 if fig : show()
@@ -107,13 +107,13 @@ class Gui:
                 if nbfeat == 1 : p = [p]
                 for i,s in enumerate(layer.selectedFeatures()):
                     x,y = [],[]
-                    for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Link = '"+s['ID Arc']+"'"))):
+                    for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Link = '"+s[0]+"'"))):
                         #print s['ID Noeud'],' ',f['Time'],' ',f['Head']
                         t = f['Time'].split(' ')[1].split(':')
                         x.append(int(t[0])*60+int(t[1]))
                         y.append(f['Velocity'])
                     p[i].plot(x,y)
-                    p[i].set_title(layer.name()+' '+s['ID Arc'])
+                    p[i].set_title(layer.name()+' '+s[0])
                     p[i].set_xlabel('Time [min]')
                     p[i].set_ylabel('Velocity [m/s]')
                 if fig : show()
@@ -128,13 +128,13 @@ class Gui:
                 if nbfeat == 1 : p = [p]
                 for i,s in enumerate(layer.selectedFeatures()):
                     x,y = [],[]
-                    for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Node = '"+s['ID Noeud']+"'"))):
+                    for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Node = '"+s[0]+"'"))):
                         #print s['ID Noeud'],' ',f['Time'],' ',f['Head']
                         t = f['Time'].split(' ')[1].split(':')
                         x.append(int(t[0])*60+int(t[1]))
                         y.append(f['Pressure'])
                     p[i].plot(x,y)
-                    p[i].set_title(layer.name()+' '+s['ID Noeud'])
+                    p[i].set_title(layer.name()+' '+s[0])
                     p[i].set_xlabel('Time [min]')
                     p[i].set_ylabel('Pressure [m]')
                 if fig : show()
@@ -162,7 +162,7 @@ class Gui:
                 # create join on first field
                 print 'create join on junctions'
                 join_info = QgsVectorJoinInfo()
-                join_info.targetFieldName = 'ID Noeud'
+                join_info.targetFieldName = 'ID Node'
                 join_info.targetFieldIndex = 0
                 join_info.joinLayerId = l.id() 
                 join_info.joinFieldName = 'Node'
@@ -175,7 +175,7 @@ class Gui:
                 # create join on first field
                 print 'create join on junctions'
                 join_info = QgsVectorJoinInfo()
-                join_info.targetFieldName = 'ID Arc'
+                join_info.targetFieldName = 'ID Link'
                 join_info.targetFieldIndex = 0
                 join_info.joinLayerId = l.id() 
                 join_info.joinFieldName = 'Link'
