@@ -269,9 +269,10 @@ class EpanetAlgorithm(GeoAlgorithm):
         outfilename = os.path.join(folder,'epanet.out')
         progress.setText('running simulation')
         log=""
+        error = False
         proc = subprocess.Popen(
             [epanet_cli, filename, outfilename],
-            shell=True,
+            #shell=True,
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -279,9 +280,15 @@ class EpanetAlgorithm(GeoAlgorithm):
             ).stdout
         for line in iter(proc.readline, ''):
             log+=line
-        #o = open(outfilename,'r')
-        #log += o.read()
-        #o.close()
+            if line.find('There are errors') != -1:
+                error = True
+        if error:
+            o = open(outfilename,'r')
+            ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, o.read())
+            o.close()
+            raise GeoAlgorithmExecutionException(
+                    "There are errors, please check processing logs or open file "+
+                    outfilename+" for details")
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, log)
         progress.setText('postprocessing output')
 
