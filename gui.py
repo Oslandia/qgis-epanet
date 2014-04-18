@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 
-from SpatialiteAlgorithmProvider import SpatialiteAlgorithmProvider
 from EpanetAlgorithmProvider import EpanetAlgorithmProvider
 from processing.core.Processing import Processing
 
@@ -30,17 +29,12 @@ class Gui:
         for a in self.actions:
             self.iface.addToolBarIcon(a)
 
-        print "here"
         self.epanetAlgoProvider = EpanetAlgorithmProvider()
-        print self.epanetAlgoProvider 
         Processing.addProvider(self.epanetAlgoProvider, True)
-        self.spatialiteAlgorithmProvider = SpatialiteAlgorithmProvider()
-        Processing.addProvider(self.spatialiteAlgorithmProvider, True)
 
         QgsMapLayerRegistry.instance().layersAdded.connect( self.layerAdded )
     
     def unload(self):
-        Processing.removeProvider(self.spatialiteAlgorithmProvider)
         Processing.removeProvider(self.epanetAlgoProvider)
         # Remove the plugin menu item and icon
         for a in self.actions:
@@ -48,17 +42,16 @@ class Gui:
 
     def timeplot(self):
         layer = self.iface.activeLayer()
-        print layer.name()
+        if not layer:
+            return
         if layer.name().lower() == 'reservoirs' or layer.name().lower() == 'tanks':
             res = QgsMapLayerRegistry.instance().mapLayersByName('Node output table')
             if res: 
-                print res
                 assert(len(res) == 1)
                 nbfeat = len(layer.selectedFeatures())
                 fig, p = None,[]
                 if nbfeat >= 1 : fig,p = subplots(1,nbfeat)
                 if nbfeat == 1 : p = [p]
-                print nbfeat, p
                 for i,s in enumerate(layer.selectedFeatures()):
                     x,y = [],[]
                     for f in res[0].getFeatures(QgsFeatureRequest(QgsExpression("Node = '"+s[0]+"'"))):
@@ -140,7 +133,6 @@ class Gui:
                 if fig : show()
 
     def layerAdded(self, layers):
-        print 'layers added ', layers
 
         # get a map from layer names
         epanet_layers = {}
@@ -157,10 +149,8 @@ class Gui:
                 result_type = 'Link time agregates'
             if 'Node' in fields and 'MaxPressure' in fields:
                 result_type = 'Node time agregates'
-            print result_type
             if result_type == 'Node time agregates':
                 # create join on first field
-                print 'create join on junctions'
                 join_info = QgsVectorJoinInfo()
                 join_info.targetFieldName = 'ID Node'
                 join_info.targetFieldIndex = 0
@@ -173,7 +163,6 @@ class Gui:
                     if name in epanet_layers: epanet_layers[name].addJoin( join_info )
             if result_type == 'Link time agregates':
                 # create join on first field
-                print 'create join on junctions'
                 join_info = QgsVectorJoinInfo()
                 join_info.targetFieldName = 'ID Link'
                 join_info.targetFieldIndex = 0
