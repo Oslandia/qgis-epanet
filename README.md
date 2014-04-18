@@ -76,6 +76,10 @@ You then need to run QGIS, install the processing plugin and configure the path 
 Note:
     On Windows, choose epanet2d.exe.
 
+Testing
+=======
+
+The file simple_network.zip contains an example of a tank emptying on a pipe. Unzip the directory en follow intructions in  simple_network/README.md
 
 Notes
 =====
