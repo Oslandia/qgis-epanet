@@ -150,27 +150,27 @@ class Gui:
             if 'Node' in fields and 'MaxPressure' in fields:
                 result_type = 'Node time agregates'
             if result_type == 'Node time agregates':
-                # create join on first field
-                join_info = QgsVectorJoinInfo()
-                join_info.targetFieldName = 'ID Node'
-                join_info.targetFieldIndex = 0
-                join_info.joinLayerId = l.id() 
-                join_info.joinFieldName = 'Node'
-                join_info.joinFieldIndex = 0
-                join_info.memoryCache = False
-                #join_info.cachedAttributes = 
                 for name in ['junctions','emitters','tanks','sources','reservoirs']:
-                    if name in epanet_layers: epanet_layers[name].addJoin( join_info )
+                    if name in epanet_layers: # create join on first field
+                        join_info = QgsVectorJoinInfo()
+                        join_info.targetFieldName = epanet_layers[name].pendingFields()[0].name()
+                        join_info.targetFieldIndex = 0
+                        join_info.joinLayerId = l.id() 
+                        join_info.joinFieldName = 'Node'
+                        join_info.joinFieldIndex = 0
+                        join_info.memoryCache = False
+                        #join_info.cachedAttributes = 
+                        epanet_layers[name].addJoin( join_info )
             if result_type == 'Link time agregates':
-                # create join on first field
-                join_info = QgsVectorJoinInfo()
-                join_info.targetFieldName = 'ID Link'
-                join_info.targetFieldIndex = 0
-                join_info.joinLayerId = l.id() 
-                join_info.joinFieldName = 'Link'
-                join_info.joinFieldIndex = 0
-                join_info.memoryCache = False
-                #join_info.cachedAttributes = 
                 for name in ['pipes','valves','pumps']:
-                    if name in epanet_layers: epanet_layers[name].addJoin( join_info )
+                    if name in epanet_layers: # create join on first field
+                        join_info = QgsVectorJoinInfo()
+                        join_info.targetFieldName = epanet_layers[name].pendingFields()[0].name()
+                        join_info.targetFieldIndex = 0
+                        join_info.joinLayerId = l.id() 
+                        join_info.joinFieldName = 'Link'
+                        join_info.joinFieldIndex = 0
+                        join_info.memoryCache = False
+                        #join_info.cachedAttributes = 
+                        epanet_layers[name].addJoin( join_info )
 
