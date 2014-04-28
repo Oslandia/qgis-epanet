@@ -399,10 +399,20 @@ class EpanetAlgorithm(GeoAlgorithm):
                     ] )
                 key = r[0]
                 node_res = []
+            elif key != r[0]:
+                key = r[0]
             else: 
                 node_res.append(r)
             total_read += 1
             progress.setPercentage(int(100*total_read/total_size))
+
+        if key and node_res: # last aggregate not agregated in loop
+            agr_node_table.append( [key, 
+                max([row[3] for row in node_res]),
+                min([row[3] for row in node_res]),
+                max([row[2] for row in node_res]),
+                min([row[2] for row in node_res]),
+                ] )
 
         time_agr_node_table_writer.addRecords( agr_node_table )
 
@@ -427,10 +437,17 @@ class EpanetAlgorithm(GeoAlgorithm):
                     ] )
                 key = r[0]
                 link_res = []
+            elif key != r[0]:
+                key = r[0]
             else: 
                 link_res.append(r)
             total_read += 1
             progress.setPercentage(int(100*total_read/total_size))
+
+        if key and link_res: # last aggregate not agregated in loop
+            agr_link_table.append( [key, 
+                mean([float(row[3]) for row in link_res])
+                ] )
 
         time_agr_link_table_writer.addRecords( agr_link_table )
 
