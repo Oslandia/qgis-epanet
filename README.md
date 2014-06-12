@@ -13,7 +13,7 @@ Requirements
 ============
 
 You need :
-* A working version of Epanet
+* A working version of Epanet (english version mendatory)
 * QGIS > 2.0
 * The QGIS Processing framework
 
