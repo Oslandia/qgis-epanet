@@ -176,6 +176,7 @@ class EpanetAlgorithm(GeoAlgorithm):
             return 'Epanet command line tool is not configured.\n\
                 Please configure it before running Epanet algorithms.'
         layers = dataobjects.getVectorLayers()
+        layers += dataobjects.getTables()
         for p in self.parameters:
             for layer in layers:
                 if layer.name().lower() == p.name.lower() :
