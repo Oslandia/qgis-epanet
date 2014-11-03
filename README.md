@@ -16,6 +16,7 @@ You need :
 * A working version of Epanet (english version mandatory)
 * QGIS > 2.0
 * The QGIS Processing framework
+* Python module matplotlib
 
 Installation
 ============
