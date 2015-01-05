@@ -28,7 +28,7 @@ __revision__ = '$Format:%H$'
 import csv
 import codecs
 import cStringIO
-from processing.core.TableWriter import TableWriter, UnicodeWriter
+from processing.tools.vector import TableWriter, UnicodeWriter
 
 
 class EpanetTableWriter(TableWriter):

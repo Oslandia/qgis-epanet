@@ -28,7 +28,7 @@ __revision__ = '$Format:%H$'
 from PyQt4.QtCore import *
 
 from EpanetTableWriter import EpanetTableWriter
-from processing.outputs.OutputTable import OutputTable
+from processing.core.outputs import OutputTable
 from processing.tools.system import *
 
 

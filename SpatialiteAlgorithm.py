@@ -39,9 +39,9 @@ from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import \
         GeoAlgorithmExecutionException
 from processing.core.ProcessingLog import ProcessingLog
-from processing.parameters.ParameterTable import ParameterTable
-from processing.parameters.ParameterString import ParameterString
-from processing.parameters.Parameter import Parameter
+from processing.core.parameters import ParameterTable
+from processing.core.parameters import ParameterString
+from processing.core.parameters import Parameter
 from EpanetOutputTable import EpanetOutputTable
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.tools import dataobjects
