@@ -1,6 +1,6 @@
 [general]
 name=qgis_epanet
-qgisMinimumVersion=2.0
+qgisMinimumVersion=2.6
 description=Extends processing framework to models the hydraulic and water quality behavior of water distribution piping systems
 version=1.0.3
 author=Oslandia
