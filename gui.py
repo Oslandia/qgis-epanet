@@ -8,7 +8,7 @@ from PyQt4.QtGui import *
 
 from qgis.core import *
 
-from pylab import *
+from matplotlib.pyplot import *
 
 import os
 
