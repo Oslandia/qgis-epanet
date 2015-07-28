@@ -32,14 +32,14 @@ Download and run http://www.epa.gov/nrmrl/wswrd/dw/epanet/EN2setup.exe
 Compile Epanet for linux
 ------------------------
 
-Download Epanet sources from http://www.epa.gov/nrmrl/wswrd/dw/epanet/EN2source.zip
+Download Epanet sources from http://www2.epa.gov/sites/production/files/2014-06/en2source.zip
 
 For linux:
 
     mkdir epanet
     cd epanet
-    wget http://www.epa.gov/nrmrl/wswrd/dw/epanet/EN2source.zip
-    unzip EN2source.zip
+    wget http://www2.epa.gov/sites/production/files/2014-06/en2source.zip
+    unzip en2source.zip
     unzip -n epanet2.zip 
     unzip -n makefiles.ZIP
     unzip -n GNU_EXE.ZIP
@@ -51,6 +51,12 @@ Open the file epanet.c, comment out the line
 and uncomment the line
 
     #define CLE
+
+The file should look afterwards like:
+
+    #define CLE     /* Compile as a command line executable */
+    //#define SOL     /* Compile as a shared object library */
+    //#define DLL       /* Compile as a Windows DLL */
 
 Open the file Makefile and replace the line
 
@@ -69,7 +75,7 @@ Install the plugin
  
 Simply put this directory in the plugin directory. On linux:
 
-    cd ~/.qgis2/python/plugin
+    cd ~/.qgis2/python/plugins
     git clone https://github.com/Oslandia/qgis-epanet.git
 
 You then need to run QGIS, install the processing plugin and configure the path to the epanet executable in QGIS menu Processsing->Options and configuration.
