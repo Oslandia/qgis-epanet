@@ -1,13 +1,13 @@
-create schema epanet
+create schema epanet;
 
 -- NOTE: on a versionned db, distribution is the replaced by name of a versionned schema view
 --       e.g. distribution_trunk_rev_head or distribution_mybranch_rev_45
 
 -- [JUNCTIONS]
-create view epanet._junctions_demand_pattern ( id integer primary key, id_pattern integer )
+create table epanet._junctions_demand_pattern ( id integer primary key, id_pattern integer );
 create view epanet.junctions as
-select n.id, n.altitude_dtm as elevation, (select _jdp.id_pattern from epanet._junctions_demand_pattern as _jdp where _jdp.id = n.id ) as id_demand_patern, n.geometry
-FROM distribution.od_node as n;
+select n.id, n.altitude as elevation, (select _jdp.id_pattern from epanet._junctions_demand_pattern as _jdp where _jdp.id = n.id ) as id_demand_patern, n.geometry
+FROM qwat_od.node as n;
 -- od_meter could contain anual consumption data 
 -- and od_subscriber and od_subscribertype could contain curve type
 
@@ -17,28 +17,28 @@ FROM distribution.od_node as n;
 
 -- [RESERVOIRS]
 create view epanet.reservoirs as
-select id_node, head, head_pattern, geometry
+select fk_node, head, head_pattern, geometry
 from distribution.OD_RESERVOIR;
 -- maybe cistern, but then missing fields
 
 -- [TANKS]
-create table epanet._tanks (id_node integer primary key, initial_water_level float, minimum_water_level float, nominal_diameter float, minimum_volume float, id_volume_curve integer);
+create table epanet._tanks (fk_node integer primary key, initial_water_level float, minimum_water_level float, nominal_diameter float, minimum_volume float, id_volume_curve integer);
 create view epanet.tanks as
-select t.id_node, t.altitude_apron as bottom_elevation, _t.initial_water_level, _t.minimum_water_level, altitude_overflow - altitude_apron as maximum_water_level, _t.nominal_diameter, _t.minimum_volume, _t.id_volume_curve, t.geometry
-from distribution.od_installation_tank as t
+select t.fk_node, t.altitude_apron as bottom_elevation, _t.initial_water_level, _t.minimum_water_level, altitude_overflow - altitude_apron as maximum_water_level, _t.nominal_diameter, _t.minimum_volume, _t.id_volume_curve, t.geometry
+from qwat_od.installation_tank as t
 inner join epanet._tanks as _t
-on _t.id_node = t.id_node;
+on _t.fk_node = t.fk_node;
 
 -- [PIPES]
-create table epanet._pipes (id integer references distribution.od_pipe(id), roughness float, minor_loss_coefficient float, status varchar);
+create table epanet._pipes (id integer references qwat_od.pipe(id), roughness float, minor_loss_coefficient float, status varchar);
 create view epanet.pipes as
-select 'pipe_'||p.id::varchar as id, p.id_node_a, p.id_node_b, p._lenght3d as lenght, as pm.diameter as diameter, _p.roughness, _p.minor_loss_coefficient, _p.status, p.geometry
-from distribution.od_pipe as p 
-inner join distribution.vl_pipe_material as pm
-on p.id_material = pm.id
+select 'pipe_'||p.id::varchar as id, p.fk_node_a, p.fk_node_b, p._length3d as length, pm.diameter as diameter, _p.roughness, _p.minor_loss_coefficient, _p.status, p.geometry
+from qwat_od.pipe as p 
+inner join qwat_vl.pipe_material as pm
+on p.fk_material = pm.id
 inner join epanet._pipes as _p
-on p.id = _p_id;
--- roughness can be in vl_pipe_material
+on p.id = _p.id;
+-- roughness can be in qwat_vl.pipe_material
 -- 
 -- the 'pipe_' qualified id is necessary for status specification and result processing
 -- this is not necessary for nodes since tanks and reservoirs have corresponding nodes 
@@ -46,10 +46,10 @@ on p.id = _p_id;
 -- we could use the notion of a link in the network the same way we use nodes
 
 -- [PUMPS]
-create table epanet._pumps(id integer references distribution.od_pump(id), power float, id_head_curve integer, speed float, id_pattern integer);
+create table epanet._pumps(id integer references qwat_od.installation_pump(id), power float, id_head_curve integer, speed float, id_pattern integer);
 create view epanet.pumps as
-select 'pump_'||p.id::varchar as id, p.INFLOW_NODE as node_start, p.OUTFLOW_NODE as node_end, 
-(select ' HEAD '|| _p.id_curve from epanet._pumps as _p where _p.id = p.id and _p.id_curve is not null)
+select 'pump_'||p.id::varchar as id, p.fk_pipe_in as node_start, p.fk_pipe_out as node_end, 
+(select ' HEAD '|| _p.id_head_curve from epanet._pumps as _p where _p.id = p.id and _p.id_head_curve is not null)
 ||
 (select ' POWER '|| _p.power from epanet._pumps as _p where _p.id = p.id and _p.power is not null)
 ||
@@ -58,29 +58,29 @@ select 'pump_'||p.id::varchar as id, p.INFLOW_NODE as node_start, p.OUTFLOW_NODE
 (select ' PATTERN '|| _p.id_pattern from epanet._pumps as _p where _p.id = p.id and _p.id_pattern is not null)
 as properties,
 geometry
-from distribution.od_pump as p;
+from qwat_od.installation_pump as p;
 -- pumps have a direction, so node modelisation is not really appropriate
 
 -- [VALVES]
-create table epanet._valve_type (id integer references distribution.vl_valve_type(id), valve_type varchar);
-create table epanet._valve_properties (id integer references distribution.od_valve(id), valve_setting varchar, minor_loss_coefficient float);
+create table epanet._valve_type (id integer references qwat_vl.valve_type(id), valve_type varchar);
+create table epanet._valve_properties (id integer references qwat_od.valve(id), valve_setting varchar, minor_loss_coefficient float);
 create view epanet.valves as
-select v.id, p.INFLOW_NODE as start_node, p.OUTFLOW_NODE as end_node, v.diameter_nominal as diameter, 
+select v.id, p.fk_pipe_in as start_node, p.fk_pipe_out as end_node, v.diameter_nominal as diameter, 
 (select _vt.valve_type from epanet._valve_type as _vt where _vt.id = v.id ) as valve_type, 
 (select _vp.valve_setting from epanet._valve_properties as _vp where _vp_id = v.id) as valve_setting, 
 (select _vp.minor_loss_coefficient from epanet._valve_properties as _vp where _pv.id = v.id) as minor_loss_coefficient,
-geometry
-from distribution.od_valve as v;
+geometry 
+from qwat_od.valve as v;
 -- like pumps, valves have direction, two nodes necessary
 -- 
 -- we could use inner joins on epanet._valve_type and epanet._valve_properties
 
 -- [EMITTERS]
-create table epanet._emitters (id_node integer references distribution.od_noe(id), flow_coefficient float);
+create table epanet._emitters (fk_node integer references qwat_od.node(id), flow_coefficient float);
 create view epanet.emitters as
-select e.id_node, e.flow_coefficient, n.geometry
+select e.fk_node, e.flow_coefficient, n.geometry
 from epanet._emitters as e
-inner join direction.od_node as n
+inner join qwat_od.node as n
 on e.id = n.id;
 
 -- [CURVES]
@@ -121,11 +121,11 @@ create table epanet.controls (control varchar);
 create table epanet.rules (rule varchar);
 
 -- [DEMANDS]
-create table epanet.demands (id integer references distribution.od_node(id), base_demand float, id_pattern integer, category varchar);
+create table epanet.demands (id integer references qwat_od.node(id), base_demand float, id_pattern integer, category varchar);
 -- category must begin with a semicolumn
 
 -- [QUALITY]
-create table epanet.quality (id integer references distribution.od_node(id), initial_quality float);
+create table epanet.quality (id integer references qwat_od.node(id), initial_quality float);
 
 -- [REACTIONS]
 create table epanet.reactions (
@@ -140,14 +140,14 @@ create table epanet.reactions (
 );
 
 -- [SOURCES]
-create table epanet.sources (id integer references distribution.od_nod(id), source_type varchar, baseline_source_strength float, id_pattern);
+create table epanet.sources (id integer references qwat_od.node(id), source_type varchar, baseline_source_strength float, id_pattern integer);
 
 -- [MIXING]
-create table epanet._mixing(id integer references distribution.od_installation_tank(id), mixing_model varchar, compartment_volume_fraction float);
+create table epanet._mixing(id integer references qwat_od.installation_tank(id), mixing_model varchar, compartment_volume_fraction float);
 create view epanet.mixing as
-select t.id_node, _m.mixing_model, _m.compartment_volume_fraction
+select t.fk_node, _m.mixing_model, _m.compartment_volume_fraction
 from epanet._mixing as _m
-inner join distribution.od_installation_tank as t
+inner join qwat_od.installation_tank as t
 on _m.id = t.id;
 
 -- [OPTIONS]
@@ -168,7 +168,7 @@ create table epanet._options (
 );
 
 -- [TIMES]
-CREATE TABLE "TIMES"(
+CREATE TABLE epanet."TIMES"(
  simulation_title varchar primary key,
  "duration"           varchar,
  "hydraulic timestep"  time,
@@ -182,7 +182,7 @@ CREATE TABLE "TIMES"(
 );
 
 -- [REPORT]
-create table report(
+create table epanet.report(
     simulation_title varchar primary key,
     "status" varchar,
     "summary" varchar,    
