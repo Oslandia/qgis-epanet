@@ -1,0 +1,107 @@
+#!/usr/bin/python
+
+# converts epanet file into tables
+
+import sys
+import codecs
+
+inp = sys.stdin;
+if len(sys.argv) > 1:
+    inp = codecs.open(sys.argv[1],'r', encoding='latin-1' )
+
+out = sys.stdout;
+if len(sys.argv) > 2:
+    out = codecs.open(sys.argv[2],'w', encoding='utf-8')
+
+point_tables = [
+    '[JUNCTIONS]',
+    '[RESERVOIRS]',
+    '[TANKS]',
+    '[PUMPS]',
+    '[VALVES]',
+    '[EMITTERS]',
+    '[SOURCES]'
+]
+
+line_tables = [
+    '[PIPES]'
+]
+
+table_sections = point_tables+line_tables+[
+    '[DEMANDS]',
+    '[STATUS]',
+    '[PATTERNS]',
+    '[CURVES]',
+    '[CONTROLS]',
+    '[QUALITY]',
+    '[REACTIONS]',
+    '[MIXING]',
+    '[COORDINATES]',
+    '[VERTICES]',
+    '[LABELS]'
+    ]
+
+line = inp.readline()
+while line:
+    if line.rstrip() in table_sections:
+        table_name = line.rstrip()[1:-1]
+        line = inp.readline()
+        if line[0] == ';': # this is a commend for column def
+            column_names = line[1:].split('\t')
+            for i,c in enumerate(column_names): column_names[i] = c.rstrip()
+            values = []
+            line = ';'
+            while line and line[0] != '[':
+                line = inp.readline()
+                line = line.rstrip()
+                if not line: break
+                pos = line.find(';')
+                if pos == 0: continue
+                if pos >0: line = line[:pos] ;
+                values.append(line.split('\t'))
+                
+            # detect the column type: varchar by default, float if all values can be float
+            typ = []
+            for i,c in enumerate(column_names):
+                typ.append('float')
+                if c[:2] == 'ID':
+                    typ[i] = 'varchar'
+                    continue
+                for v in values:
+                    try:
+                        float(v[i])
+                    except:
+                        typ[i] = 'varchar'
+                        break
+            # now create the table
+            decl = ""
+            for i,c in enumerate(column_names): decl+='"'+c+'" '+typ[i]+', '
+            decl = decl[:-2]
+            out.write('CREATE TABLE "'+table_name+'" ('+decl+');\n')
+            for r in values:
+                vals = ""
+                for i in range(len(typ)):
+                    if i >= len(r): break
+                    if typ[i] == 'varchar': vals += "'"+r[i].strip().rstrip()+"'"+", "
+                    else : vals += str(r[i])+", "
+                out.write('INSERT INTO "'+table_name+'" VALUES ('+vals[:-2]+');\n')
+            if '['+table_name+']' in point_tables:
+                out.write('ALTER TABLE "'+table_name+'" ADD COLUMN fid serial PRIMARY KEY;\n')
+                out.write('ALTER TABLE "'+table_name+'" ADD COLUMN geom geometry(''POINT'',2154);\n')
+            if '['+table_name+']' in line_tables:
+                out.write('ALTER TABLE "'+table_name+'" ADD COLUMN fid serial PRIMARY KEY;\n')
+                out.write('ALTER TABLE "'+table_name+'" ADD COLUMN geom geometry(''LINESTRING'',2154);\n')
+
+
+
+
+            
+            
+
+        
+
+
+
+
+    line = inp.readline()
+
