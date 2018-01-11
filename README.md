@@ -26,7 +26,7 @@ You need to have epanet as a command line tool for the plugin to work.
 Install Epanet for Windows
 --------------------------
 
-Download and run http://www.epa.gov/nrmrl/wswrd/dw/epanet/EN2setup.exe
+Download and run https://www.epa.gov/sites/production/files/2014-06/en2setup_0.exe
 
 
 Compile Epanet for linux
